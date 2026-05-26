@@ -1,11 +1,6 @@
-import { ArrowRight, CircleDot, Gauge, Waves } from "lucide-react";
+import { ArrowRight, CircleDot } from "lucide-react";
+import { SimulationDemo } from "@/components/simulation-demo";
 import { GithubLight } from "@/components/ui/svgs/githubLight";
-
-const metrics = [
-  { label: "simulation step", value: "120 hz" },
-  { label: "render target", value: "60 fps" },
-  { label: "physics core", value: "wasm" },
-];
 
 const stack = ["Next.js", "PixiJS", "WebAssembly", "Deterministic physics"];
 
@@ -21,10 +16,12 @@ export default function Home() {
                 aria-hidden="true"
               />
             </div>
-            <span className="font-semibold text-sm tracking-normal">Cueball</span>
+            <span className="font-semibold text-sm tracking-normal">
+              Cueball
+            </span>
           </div>
           <a
-            href="https://github.com"
+            href="https://github.com/thesushilsharma/cueball"
             className="inline-flex size-9 items-center justify-center rounded-[10px] bg-card text-foreground shadow-sm ring-1 ring-border transition hover:ring-ring/35 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
             aria-label="Open GitHub"
           >
@@ -60,41 +57,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div
-            id="simulation"
-            className="rounded-[16px] bg-card p-4 shadow-sm ring-1 ring-border sm:p-6"
-          >
-            <div className="relative aspect-4/3 overflow-hidden rounded-[10px] bg-muted ring-1 ring-border">
-              <div className="absolute inset-6 rounded-[10px] border border-border bg-card">
-                <div className="absolute inset-4 rounded-[6px] border border-border/70" />
-                <div className="absolute top-[28%] left-[24%] size-7 rounded-full bg-foreground shadow-[0_18px_30px_rgba(15,20,25,0.18)]" />
-                <div className="absolute top-[45%] left-[49%] size-8 rounded-full bg-card shadow-[0_20px_32px_rgba(15,20,25,0.16)] ring-1 ring-border" />
-                <div className="absolute right-[22%] bottom-[24%] size-6 rounded-full bg-muted-foreground" />
-                <div className="absolute top-[15%] right-[18%] size-5 rounded-full border border-border bg-muted" />
-                <div className="absolute top-[49%] left-[54%] h-px w-[30%] origin-left rotate-[-22deg] bg-primary" />
-              </div>
-              <div className="absolute top-4 left-4 flex items-center gap-2 rounded-[6px] bg-card px-3 py-2 font-mono text-muted-foreground text-xs shadow-sm ring-1 ring-border">
-                <Waves className="size-3.5" aria-hidden="true" />
-                stable trajectory
-              </div>
-              <div className="absolute right-4 bottom-4 flex items-center gap-2 rounded-[6px] bg-card px-3 py-2 font-mono text-muted-foreground text-xs shadow-sm ring-1 ring-border">
-                <Gauge className="size-3.5" aria-hidden="true" />
-                0.8 ms step
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              {metrics.map((metric) => (
-                <div key={metric.label} className="rounded-[10px] bg-muted p-4">
-                  <div className="font-mono text-muted-foreground text-xs tracking-normal">
-                    {metric.label}
-                  </div>
-                  <div className="mt-2 font-semibold text-2xl">
-                    {metric.value}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div id="simulation">
+            <SimulationDemo />
           </div>
         </main>
 
