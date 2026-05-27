@@ -6,9 +6,9 @@ const stack = ["Next.js", "PixiJS", "WebAssembly", "Deterministic physics"];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-muted text-foreground">
-      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between border-border border-b py-5">
+    <div className="h-dvh overflow-hidden bg-muted text-foreground">
+      <section className="mx-auto flex h-full w-full max-w-7xl flex-col px-4 py-3 sm:px-6 lg:px-8">
+        <header className="flex shrink-0 items-center justify-between border-border border-b py-4">
           <div className="flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-[10px] bg-card shadow-sm ring-1 ring-border">
               <CircleDot
@@ -29,21 +29,21 @@ export default function Home() {
           </a>
         </header>
 
-        <main className="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.82fr)] lg:gap-14">
+        <main className="grid min-h-0 flex-1 items-center gap-6 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.82fr)] lg:gap-10">
           <div className="max-w-3xl">
-            <p className="mb-5 font-mono text-muted-foreground text-xs tracking-normal">
+            <p className="mb-4 font-mono text-muted-foreground text-xs tracking-normal">
               HIGH-PERFORMANCE BILLIARDS SIMULATION
             </p>
-            <h1 className="max-w-4xl text-pretty font-semibold text-[clamp(3rem,8vw,3.75rem)] leading-[0.98] tracking-normal">
+            <h1 className="max-w-4xl text-pretty font-semibold text-[clamp(2.5rem,6vw,3.5rem)] leading-[0.98] tracking-normal">
               Precision pool physics in a glass-clear web stack.
             </h1>
-            <p className="mt-6 max-w-2xl text-[0.95rem] text-muted-foreground leading-[1.55]">
+            <p className="mt-5 max-w-2xl text-[0.95rem] text-muted-foreground leading-[1.55]">
               Cueball separates rendering from simulation, pairing a WASM
               physics core with a modern Next.js interface for smooth,
               repeatable play.
             </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#simulation"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-primary px-5 font-semibold text-primary-foreground text-sm transition hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
@@ -63,7 +63,7 @@ export default function Home() {
           </div>
         </main>
 
-        <footer className="grid gap-3 border-border border-t py-5 sm:grid-cols-[1fr_auto] sm:items-center">
+        <footer className="grid shrink-0 gap-3 border-border border-t py-4 sm:grid-cols-[1fr_auto] sm:items-center">
           <p className="text-muted-foreground text-sm">
             Built for clean separation between rendering, simulation, and input.
           </p>

@@ -326,13 +326,13 @@ export function SimulationDemo() {
   }, [friction, isRunning]);
 
   return (
-    <div className="rounded-[16px] bg-card p-4 shadow-sm ring-1 ring-border sm:p-6">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
+    <div className="rounded-[16px] bg-card p-3 shadow-sm ring-1 ring-border sm:p-4">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px]">
         <div className="relative overflow-hidden rounded-[10px] bg-muted ring-1 ring-border">
           <canvas
             ref={canvasRef}
             aria-label="Interactive billiards physics simulation"
-            className="aspect-[3/2] h-auto w-full"
+            className="aspect-[16/10] h-auto w-full"
             height={table.height}
             width={table.width}
           />
@@ -344,7 +344,7 @@ export function SimulationDemo() {
           </div>
         </div>
 
-        <div className="grid content-start gap-4">
+        <div className="grid content-start gap-3">
           <div className="grid grid-cols-3 overflow-hidden rounded-[10px] bg-muted p-1 ring-1 ring-border xl:grid-cols-1">
             {shots.map((shot) => (
               <button
@@ -433,9 +433,9 @@ export function SimulationDemo() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {metrics.map((metric) => (
-          <div key={metric.label} className="rounded-[10px] bg-muted p-4">
+          <div key={metric.label} className="rounded-[10px] bg-muted p-3">
             <div className="font-mono text-muted-foreground text-xs tracking-normal">
               {metric.label}
             </div>
