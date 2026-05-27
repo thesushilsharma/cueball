@@ -1,4 +1,4 @@
-import { ArrowRight, CircleDot } from "lucide-react";
+import { ArrowRight, CircleDot, Gauge } from "lucide-react";
 import { SimulationDemo } from "@/components/simulation-demo";
 import { GithubLight } from "@/components/ui/svgs/githubLight";
 
@@ -51,8 +51,9 @@ export default function Home() {
                 View simulation
                 <ArrowRight className="size-4" aria-hidden="true" />
               </a>
-              <div className="inline-flex h-12 items-center justify-center rounded-[10px] bg-card px-5 text-muted-foreground text-sm shadow-sm ring-1 ring-border">
-                Alpha preview
+              <div className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-card px-5 text-muted-foreground text-sm shadow-sm ring-1 ring-border">
+                <Gauge className="size-4 text-primary" aria-hidden="true" />
+                120 hz physics loop
               </div>
             </div>
           </div>
