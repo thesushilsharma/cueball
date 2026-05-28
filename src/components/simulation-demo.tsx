@@ -2,99 +2,22 @@
 
 import { Pause, Play, RotateCcw, Zap } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-type Ball = {
-  id: number;
-  color: string;
-  mass: number;
-  radius: number;
-  vx: number;
-  vy: number;
-  x: number;
-  y: number;
-};
-
-type Shot = {
-  label: string;
-  value: string;
-  impulse: { x: number; y: number };
-};
-
-const shots: Shot[] = [
-  { label: "Break", value: "break", impulse: { x: 360, y: -72 } },
-  { label: "Rail cut", value: "rail", impulse: { x: 285, y: 118 } },
-  { label: "Soft stun", value: "stun", impulse: { x: 180, y: -12 } },
-];
-
-const table = {
-  height: 520,
-  rail: 42,
-  width: 780,
-};
+import {
+  type Ball,
+  createRack,
+  getActiveBallCount,
+  getSystemEnergy,
+  SIMULATION_HZ,
+  shots,
+  stepSimulation,
+  table,
+} from "@/lib/physics";
 
 const metrics = [
   { label: "simulation step", value: "120 hz" },
   { label: "render target", value: "60 fps" },
   { label: "collisions", value: "elastic" },
 ];
-
-function createRack(shot: Shot, power: number): Ball[] {
-  const centerY = table.height * 0.5;
-  const cueVelocityScale = power / 60;
-
-  return [
-    {
-      id: 0,
-      color: "#f8fafc",
-      mass: 1,
-      radius: 15,
-      vx: shot.impulse.x * cueVelocityScale,
-      vy: shot.impulse.y * cueVelocityScale,
-      x: 154,
-      y: centerY + 14,
-    },
-    {
-      id: 1,
-      color: "#0f1419",
-      mass: 1,
-      radius: 15,
-      vx: 0,
-      vy: 0,
-      x: 442,
-      y: centerY,
-    },
-    {
-      id: 2,
-      color: "#2c5ef5",
-      mass: 1,
-      radius: 15,
-      vx: 0,
-      vy: 0,
-      x: 474,
-      y: centerY - 18,
-    },
-    {
-      id: 3,
-      color: "#4a5568",
-      mass: 1,
-      radius: 15,
-      vx: 0,
-      vy: 0,
-      x: 474,
-      y: centerY + 18,
-    },
-    {
-      id: 4,
-      color: "#d7dde4",
-      mass: 1,
-      radius: 15,
-      vx: 0,
-      vy: 0,
-      x: 506,
-      y: centerY,
-    },
-  ];
-}
 
 function drawTable(context: CanvasRenderingContext2D, balls: Ball[]) {
   const { height, rail, width } = table;
@@ -140,7 +63,7 @@ function drawTable(context: CanvasRenderingContext2D, balls: Ball[]) {
     context.shadowOffsetY = 10;
     context.fillStyle = ball.color;
     context.beginPath();
-    context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    context.arc(ball.position.x, ball.position.y, ball.radius, 0, Math.PI * 2);
     context.fill();
     context.restore();
 
@@ -148,7 +71,13 @@ function drawTable(context: CanvasRenderingContext2D, balls: Ball[]) {
       ball.id === 0 ? "#d9dde3" : "rgba(255, 255, 255, 0.48)";
     context.lineWidth = 2;
     context.beginPath();
-    context.arc(ball.x - 4, ball.y - 4, ball.radius * 0.36, 0, Math.PI * 2);
+    context.arc(
+      ball.position.x - 4,
+      ball.position.y - 4,
+      ball.radius * 0.36,
+      0,
+      Math.PI * 2,
+    );
     context.stroke();
   }
 }
@@ -163,88 +92,6 @@ function roundRect(
 ) {
   context.beginPath();
   context.roundRect(x, y, width, height, radius);
-}
-
-function stepSimulation(balls: Ball[], friction: number) {
-  const bounds = {
-    bottom: table.height - table.rail - 16,
-    left: table.rail + 16,
-    right: table.width - table.rail - 16,
-    top: table.rail + 16,
-  };
-  let collisions = 0;
-
-  for (const ball of balls) {
-    ball.x += ball.vx / 120;
-    ball.y += ball.vy / 120;
-    ball.vx *= friction;
-    ball.vy *= friction;
-
-    if (Math.abs(ball.vx) < 0.8) {
-      ball.vx = 0;
-    }
-    if (Math.abs(ball.vy) < 0.8) {
-      ball.vy = 0;
-    }
-
-    if (ball.x < bounds.left) {
-      ball.x = bounds.left;
-      ball.vx = Math.abs(ball.vx) * 0.84;
-      collisions += 1;
-    }
-    if (ball.x > bounds.right) {
-      ball.x = bounds.right;
-      ball.vx = -Math.abs(ball.vx) * 0.84;
-      collisions += 1;
-    }
-    if (ball.y < bounds.top) {
-      ball.y = bounds.top;
-      ball.vy = Math.abs(ball.vy) * 0.84;
-      collisions += 1;
-    }
-    if (ball.y > bounds.bottom) {
-      ball.y = bounds.bottom;
-      ball.vy = -Math.abs(ball.vy) * 0.84;
-      collisions += 1;
-    }
-  }
-
-  for (let index = 0; index < balls.length; index += 1) {
-    for (let next = index + 1; next < balls.length; next += 1) {
-      const a = balls[index];
-      const b = balls[next];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const distance = Math.hypot(dx, dy);
-      const minimum = a.radius + b.radius;
-
-      if (distance > 0 && distance < minimum) {
-        const nx = dx / distance;
-        const ny = dy / distance;
-        const overlap = (minimum - distance) / 2;
-        const relativeVelocityX = a.vx - b.vx;
-        const relativeVelocityY = a.vy - b.vy;
-        const speed = relativeVelocityX * nx + relativeVelocityY * ny;
-
-        a.x -= nx * overlap;
-        a.y -= ny * overlap;
-        b.x += nx * overlap;
-        b.y += ny * overlap;
-
-        if (speed > 0) {
-          const impulse = (2 * speed) / (a.mass + b.mass);
-          a.vx -= impulse * b.mass * nx;
-          a.vy -= impulse * b.mass * ny;
-          b.vx += impulse * a.mass * nx;
-          b.vy += impulse * a.mass * ny;
-        }
-
-        collisions += 1;
-      }
-    }
-  }
-
-  return collisions;
 }
 
 export function SimulationDemo() {
@@ -294,9 +141,9 @@ export function SimulationDemo() {
       accumulator += elapsed;
 
       if (isRunning) {
-        while (accumulator >= 1 / 120) {
+        while (accumulator >= 1 / SIMULATION_HZ) {
           collisionRef.current += stepSimulation(ballsRef.current, friction);
-          accumulator -= 1 / 120;
+          accumulator -= 1 / SIMULATION_HZ;
         }
       } else {
         accumulator = 0;
@@ -304,13 +151,8 @@ export function SimulationDemo() {
 
       drawTable(context, ballsRef.current);
 
-      const energy = ballsRef.current.reduce(
-        (total, ball) => total + Math.hypot(ball.vx, ball.vy),
-        0,
-      );
-      const activeBalls = ballsRef.current.filter(
-        (ball) => Math.hypot(ball.vx, ball.vy) > 2,
-      ).length;
+      const energy = getSystemEnergy(ballsRef.current);
+      const activeBalls = getActiveBallCount(ballsRef.current);
       setStats({
         activeBalls,
         collisions: collisionRef.current,
