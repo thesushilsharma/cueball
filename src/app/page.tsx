@@ -1,4 +1,5 @@
 import { ArrowRight, CircleDot, Gauge } from "lucide-react";
+import Link from "next/link";
 import { SimulationDemo } from "@/components/simulation-demo";
 import { GithubLight } from "@/components/ui/svgs/githubLight";
 
@@ -44,13 +45,13 @@ export default function Home() {
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#simulation"
+              <Link
+                href="/game"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-primary px-5 font-semibold text-primary-foreground text-sm transition hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
               >
-                View simulation
+                Play game
                 <ArrowRight className="size-4" aria-hidden="true" />
-              </a>
+              </Link>
               <div className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-card px-5 text-muted-foreground text-sm shadow-sm ring-1 ring-border">
                 <Gauge className="size-4 text-primary" aria-hidden="true" />
                 120 hz physics loop
