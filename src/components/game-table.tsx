@@ -42,9 +42,20 @@ type GameSnapshot = {
 type PixiLayers = {
   aim: Graphics;
   balls: Graphics;
+  colors: GameColors;
   labels: Container;
   table: Graphics;
   Text: typeof PixiText;
+};
+
+type GameColors = {
+  cushion: number;
+  felt: number;
+  guide: number;
+  pocket: number;
+  pocketRim: number;
+  railDark: number;
+  railLight: number;
 };
 
 const initialSnapshot: GameSnapshot = {
@@ -56,13 +67,6 @@ const initialSnapshot: GameSnapshot = {
   pocketed: [],
   status: "aiming",
 };
-
-const feltColor = 0x17624a;
-const railDark = 0x2a160c;
-const railLight = 0x74431f;
-const cushionColor = 0x0f5a42;
-const guideColor = 0xf1d18f;
-const goldAccent = 0xd8aa57;
 
 export function GameTable() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -133,6 +137,7 @@ export function GameTable() {
       const layers: PixiLayers = {
         aim: new Graphics(),
         balls: new Graphics(),
+        colors: getGameColors(),
         labels: new Container(),
         table: new Graphics(),
         Text,
@@ -349,22 +354,22 @@ export function GameTable() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <div className="rounded-[14px] bg-[#0b0704] p-3 shadow-2xl shadow-black/40 ring-1 ring-[#5b3d26]">
+      <div className="rounded-[14px] bg-[var(--game-table-shadow)] p-3 shadow-2xl shadow-black/40 ring-1 ring-border">
         <div
           ref={hostRef}
           aria-label="Playable Cueball PixiJS 8-ball game table"
-          className="aspect-[3/2] w-full overflow-hidden rounded-[10px] bg-[#17624a]"
+          className="aspect-[3/2] w-full overflow-hidden rounded-[10px] bg-[var(--game-felt)]"
           role="img"
         />
       </div>
 
       <div className="grid content-start gap-3">
-        <div className="rounded-[10px] bg-[#241910] p-4 text-[#f7efe2] ring-1 ring-[#5b3d26]">
-          <div className="font-mono text-[#d8aa57] text-xs">current turn</div>
+        <div className="rounded-[10px] bg-card p-4 text-card-foreground ring-1 ring-border">
+          <div className="font-mono text-primary text-xs">current turn</div>
           <div className="mt-1 font-semibold text-3xl">
             Player {snapshot.currentPlayer}
           </div>
-          <p className="mt-3 min-h-12 text-[#d6c3a5] text-sm leading-6">
+          <p className="mt-3 min-h-12 text-muted-foreground text-sm leading-6">
             {snapshot.message}
           </p>
         </div>
@@ -376,31 +381,31 @@ export function GameTable() {
           <StatTile label="moving" value={snapshot.activeBalls} />
         </div>
 
-        <div className="rounded-[10px] bg-[#241910] p-3 ring-1 ring-[#5b3d26]">
-          <div className="font-mono text-[#d8aa57] text-xs">pocketed</div>
+        <div className="rounded-[10px] bg-card p-3 ring-1 ring-border">
+          <div className="font-mono text-primary text-xs">pocketed</div>
           <div className="mt-2 flex min-h-8 flex-wrap gap-1.5">
             {snapshot.pocketed.length ? (
               snapshot.pocketed.map((number) => (
                 <span
-                  className="grid size-7 place-items-center rounded-full bg-[#f7efe2] font-mono text-[#14100c] text-xs ring-1 ring-[#5b3d26]"
+                  className="grid size-7 place-items-center rounded-full bg-foreground font-mono text-background text-xs ring-1 ring-border"
                   key={number}
                 >
                   {number}
                 </span>
               ))
             ) : (
-              <span className="text-[#d6c3a5] text-sm">none yet</span>
+              <span className="text-muted-foreground text-sm">none yet</span>
             )}
           </div>
         </div>
 
-        <div className="rounded-[10px] bg-[#241910] p-3 font-mono text-[#d6c3a5] text-xs ring-1 ring-[#5b3d26]">
+        <div className="rounded-[10px] bg-card p-3 font-mono text-muted-foreground text-xs ring-1 ring-border">
           drag cue ball to aim / energy {snapshot.energy} px-s / physics{" "}
           {SIMULATION_HZ} hz
         </div>
 
         <button
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-[#d8aa57] px-3 font-semibold text-[#14100c] text-sm transition hover:bg-[#efc777] focus-visible:outline-2 focus-visible:outline-[#f7efe2] focus-visible:outline-offset-2"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-primary px-3 font-semibold text-primary-foreground text-sm transition hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
           onClick={resetGame}
           type="button"
         >
@@ -414,9 +419,9 @@ export function GameTable() {
 
 function StatTile({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-[10px] bg-[#241910] p-3 ring-1 ring-[#5b3d26]">
-      <div className="font-mono text-[#d8aa57] text-xs">{label}</div>
-      <div className="mt-1 font-semibold text-[#f7efe2] text-xl capitalize">
+    <div className="rounded-[10px] bg-card p-3 ring-1 ring-border">
+      <div className="font-mono text-primary text-xs">{label}</div>
+      <div className="mt-1 font-semibold text-card-foreground text-xl capitalize">
         {value}
       </div>
     </div>
@@ -432,21 +437,23 @@ function drawScene(
     return;
   }
 
-  drawTable(layers.table);
-  drawAim(layers.aim, balls, aimPoint);
+  drawTable(layers.table, layers.colors);
+  drawAim(layers.aim, balls, aimPoint, layers.colors);
   drawBalls(layers.balls, layers.labels, balls, layers.Text);
 }
 
-function drawTable(graphics: Graphics) {
+function drawTable(graphics: Graphics, colors: GameColors) {
   const { height, rail, width } = table;
 
   graphics.clear();
-  graphics.roundRect(0, 0, width, height, 22).fill(railDark);
-  graphics.roundRect(14, 14, width - 28, height - 28, 18).fill(railLight);
-  graphics.roundRect(26, 26, width - 52, height - 52, 14).fill(railDark);
+  graphics.roundRect(0, 0, width, height, 22).fill(colors.railDark);
+  graphics
+    .roundRect(14, 14, width - 28, height - 28, 18)
+    .fill(colors.railLight);
+  graphics.roundRect(26, 26, width - 52, height - 52, 14).fill(colors.railDark);
   graphics
     .roundRect(rail, rail, width - rail * 2, height - rail * 2, 12)
-    .fill(cushionColor);
+    .fill(colors.cushion);
   graphics
     .roundRect(
       rail + 22,
@@ -455,7 +462,7 @@ function drawTable(graphics: Graphics) {
       height - (rail + 22) * 2,
       8,
     )
-    .fill(feltColor)
+    .fill(colors.felt)
     .stroke({ alpha: 0.22, color: 0xffffff, width: 2 });
 
   for (let x = rail + 78; x < width - rail; x += 78) {
@@ -475,22 +482,29 @@ function drawTable(graphics: Graphics) {
   ]) {
     graphics
       .circle(diamond[0], diamond[1], 3)
-      .fill({ alpha: 0.82, color: guideColor });
+      .fill({ alpha: 0.82, color: colors.guide });
   }
 
   for (const pocket of pockets) {
     graphics
       .circle(pocket.x + 2, pocket.y + 2, POCKET_RADIUS + 10)
       .fill({ alpha: 0.35, color: 0x000000 });
-    graphics.circle(pocket.x, pocket.y, POCKET_RADIUS + 7).fill(0x070504);
-    graphics.circle(pocket.x, pocket.y, POCKET_RADIUS).fill(0x000000);
+    graphics
+      .circle(pocket.x, pocket.y, POCKET_RADIUS + 7)
+      .fill(colors.pocketRim);
+    graphics.circle(pocket.x, pocket.y, POCKET_RADIUS).fill(colors.pocket);
     graphics
       .circle(pocket.x - 4, pocket.y - 5, POCKET_RADIUS * 0.34)
       .fill({ alpha: 0.16, color: 0xffffff });
   }
 }
 
-function drawAim(graphics: Graphics, balls: Ball[], aimPoint: Vector | null) {
+function drawAim(
+  graphics: Graphics,
+  balls: Ball[],
+  aimPoint: Vector | null,
+  colors: GameColors,
+) {
   const cueBall = getCueBall(balls);
 
   graphics.clear();
@@ -520,7 +534,7 @@ function drawAim(graphics: Graphics, balls: Ball[], aimPoint: Vector | null) {
       cueBall.position.x + nx * shotLength,
       cueBall.position.y + ny * shotLength,
     )
-    .stroke({ alpha: 0.5, color: guideColor, width: 3 });
+    .stroke({ alpha: 0.5, color: colors.guide, width: 3 });
 
   graphics
     .moveTo(
@@ -532,7 +546,7 @@ function drawAim(graphics: Graphics, balls: Ball[], aimPoint: Vector | null) {
 
   graphics
     .circle(aimPoint.x, aimPoint.y, 8)
-    .fill({ alpha: 0.72, color: goldAccent });
+    .fill({ alpha: 0.72, color: colors.guide });
 }
 
 function drawBalls(
@@ -609,4 +623,22 @@ function drawBallLabel(labels: Container, ball: Ball, Text: typeof PixiText) {
 
 function toPixiColor(color: string) {
   return Number.parseInt(color.replace("#", ""), 16);
+}
+
+function getGameColors(): GameColors {
+  const styles = getComputedStyle(document.documentElement);
+
+  return {
+    cushion: cssColorToPixi(styles.getPropertyValue("--game-cushion")),
+    felt: cssColorToPixi(styles.getPropertyValue("--game-felt")),
+    guide: cssColorToPixi(styles.getPropertyValue("--game-guide")),
+    pocket: cssColorToPixi(styles.getPropertyValue("--game-pocket")),
+    pocketRim: cssColorToPixi(styles.getPropertyValue("--game-pocket-rim")),
+    railDark: cssColorToPixi(styles.getPropertyValue("--game-rail-dark")),
+    railLight: cssColorToPixi(styles.getPropertyValue("--game-rail-light")),
+  };
+}
+
+function cssColorToPixi(value: string) {
+  return Number.parseInt(value.trim().replace("#", ""), 16);
 }

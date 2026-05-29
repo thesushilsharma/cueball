@@ -81,6 +81,14 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.623 0.214 259.815);
+  --game-table-shadow: #0b0704;
+  --game-felt: #17624a;
+  --game-rail-dark: #2a160c;
+  --game-rail-light: #74431f;
+  --game-cushion: #0f5a42;
+  --game-guide: #f1d18f;
+  --game-pocket: #000000;
+  --game-pocket-rim: #070504;
 }
 
 .dark {
