@@ -405,7 +405,7 @@ export function GameTable() {
         </div>
 
         <button
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] bg-primary px-3 font-semibold text-primary-foreground text-sm transition hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+          className="interactive-press inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary px-3 font-semibold text-primary-foreground text-sm transition-[background-color] duration-200 hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
           onClick={resetGame}
           type="button"
         >

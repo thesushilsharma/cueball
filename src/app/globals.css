@@ -89,6 +89,8 @@
   --game-guide: #f1d18f;
   --game-pocket: #000000;
   --game-pocket-rim: #070504;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 .dark {
@@ -134,5 +136,82 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .interactive-press {
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .interactive-press:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .interactive-press:hover {
+      transition-duration: 160ms;
+    }
+  }
+
+  .fade-up {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 280ms var(--ease-out),
+      transform 280ms var(--ease-out);
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  .stagger-fade-up {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: stagger-fade-up 280ms var(--ease-out) forwards;
+  }
+
+  .stagger-fade-up:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-fade-up:nth-child(2) {
+    animation-delay: 40ms;
+  }
+  .stagger-fade-up:nth-child(3) {
+    animation-delay: 80ms;
+  }
+  .stagger-fade-up:nth-child(4) {
+    animation-delay: 120ms;
+  }
+
+  @keyframes stagger-fade-up {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-up {
+      transition: opacity 200ms ease;
+      transform: none;
+
+      @starting-style {
+        opacity: 0;
+        transform: none;
+      }
+    }
+
+    .stagger-fade-up {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    .interactive-press:active {
+      transform: none;
+    }
   }
 }
