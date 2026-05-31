@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   applyCueImpulse,
   type Ball,
+  computeCueTrajectory,
   createEightBallRack,
   getActiveBallCount,
   getCueBall,
@@ -553,16 +554,67 @@ function drawAim(
 
   const nx = pull.x / pullLength;
   const ny = pull.y / pullLength;
-  const shotLength = Math.min(230, pullLength * 2.2);
   const cueBack = Math.min(78, pullLength * 0.7);
+  const trajectory = computeCueTrajectory(cueBall, pull, balls);
 
-  graphics
-    .moveTo(cueBall.position.x, cueBall.position.y)
-    .lineTo(
-      cueBall.position.x + nx * shotLength,
-      cueBall.position.y + ny * shotLength,
-    )
-    .stroke({ alpha: 0.5, color: colors.guide, width: 3 });
+  if (trajectory.objectBallPath && trajectory.hitBall) {
+    const objectColor = toPixiColor(trajectory.hitBall.color);
+
+    for (
+      let index = 0;
+      index < trajectory.objectBallPath.points.length - 1;
+      index += 1
+    ) {
+      const from = trajectory.objectBallPath.points[index];
+      const to = trajectory.objectBallPath.points[index + 1];
+      const fade = Math.max(0.28, 0.78 - index * 0.08);
+
+      graphics
+        .moveTo(from.x, from.y)
+        .lineTo(to.x, to.y)
+        .stroke({ alpha: fade, color: objectColor, width: index === 0 ? 3 : 2.5 });
+    }
+
+    for (const bounce of trajectory.objectBallPath.bouncePoints) {
+      graphics
+        .circle(bounce.x, bounce.y, 4)
+        .fill({ alpha: 0.75, color: objectColor })
+        .stroke({ alpha: 0.35, color: 0xffffff, width: 1.5 });
+    }
+
+    graphics
+      .circle(trajectory.hitBall.position.x, trajectory.hitBall.position.y, 10)
+      .stroke({ alpha: 0.7, color: objectColor, width: 2 });
+  }
+
+  for (let index = 0; index < trajectory.points.length - 1; index += 1) {
+    const from = trajectory.points[index];
+    const to = trajectory.points[index + 1];
+    const fade = Math.max(0.22, 0.72 - index * 0.09);
+
+    graphics
+      .moveTo(from.x, from.y)
+      .lineTo(to.x, to.y)
+      .stroke({ alpha: fade, color: colors.guide, width: index === 0 ? 3 : 2.5 });
+  }
+
+  for (const bounce of trajectory.bouncePoints) {
+    graphics
+      .circle(bounce.x, bounce.y, 5)
+      .fill({ alpha: 0.85, color: colors.guide })
+      .stroke({ alpha: 0.45, color: 0xffffff, width: 1.5 });
+  }
+
+  if (trajectory.ballContact) {
+    const contact = trajectory.ballContact;
+
+    graphics
+      .circle(contact.x, contact.y, cueBall.radius)
+      .stroke({ alpha: 0.55, color: colors.guide, width: 2 });
+    graphics
+      .circle(contact.x, contact.y, 4)
+      .fill({ alpha: 0.95, color: colors.guide });
+  }
 
   graphics
     .moveTo(
