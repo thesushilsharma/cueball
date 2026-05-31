@@ -106,6 +106,8 @@ export function GameTable() {
     const hostElement = host;
     let isMounted = true;
     let accumulator = 0;
+    let resizeObserver: ResizeObserver | undefined;
+    let removeCanvasListeners: (() => void) | undefined;
 
     async function mountPixi() {
       const { Application, Container, Graphics, Text } = await import(
@@ -133,6 +135,30 @@ export function GameTable() {
 
       app.canvas.className = "block h-full w-full touch-none";
       hostElement.appendChild(app.canvas);
+
+      const fitTableView = () => {
+        const width = hostElement.clientWidth;
+        const height = hostElement.clientHeight;
+
+        if (width === 0 || height === 0) {
+          return;
+        }
+
+        app.renderer.resize(width, height);
+        app.canvas.style.width = "100%";
+        app.canvas.style.height = "100%";
+
+        const scale = Math.min(width / table.width, height / table.height);
+        app.stage.scale.set(scale);
+        app.stage.position.set(
+          (width - table.width * scale) / 2,
+          (height - table.height * scale) / 2,
+        );
+      };
+
+      fitTableView();
+      resizeObserver = new ResizeObserver(fitTableView);
+      resizeObserver.observe(hostElement);
 
       const layers: PixiLayers = {
         aim: new Graphics(),
@@ -333,7 +359,7 @@ export function GameTable() {
         });
       }
 
-      return () => {
+      removeCanvasListeners = () => {
         app.canvas.removeEventListener("pointerdown", handlePointerDown);
         app.canvas.removeEventListener("pointermove", handlePointerMove);
         app.canvas.removeEventListener("pointerup", handlePointerUp);
@@ -345,6 +371,8 @@ export function GameTable() {
 
     return () => {
       isMounted = false;
+      resizeObserver?.disconnect();
+      removeCanvasListeners?.();
       appRef.current?.destroy(true);
       appRef.current = null;
       layersRef.current = null;
@@ -358,7 +386,7 @@ export function GameTable() {
         <div
           ref={hostRef}
           aria-label="Playable Cueball PixiJS 8-ball game table"
-          className="aspect-[3/2] w-full overflow-hidden rounded-[10px] bg-[var(--game-felt)]"
+          className="aspect-[3/2] w-full overflow-hidden rounded-[10px] bg-[var(--game-table-shadow)]"
           role="img"
         />
       </div>
