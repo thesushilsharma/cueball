@@ -1,4 +1,12 @@
-import { ArrowLeft, CircleDot, Gauge, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleDot,
+  Crosshair,
+  Gauge,
+  MousePointer2,
+  Target,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { GameTable } from "@/components/game-table";
 
@@ -7,6 +15,32 @@ const rules = [
   "Always strike your own group first; hitting the opponent's ball first is a foul.",
   "Clear every ball in your group before taking on the black 8-ball.",
   "Legally pocket the black ball last to win the frame.",
+];
+
+const controls = [
+  {
+    description:
+      "Press on the white cue ball and drag away from where you want to shoot.",
+    icon: MousePointer2,
+    title: "Grab the cue ball",
+  },
+  {
+    description:
+      "The further you pull, the higher the power meter climbs — up to 100%.",
+    icon: Zap,
+    title: "Pull back for power",
+  },
+  {
+    description:
+      "Gold shows the cue path; the struck ball’s color shows where it will go.",
+    icon: Target,
+    title: "Read the trajectories",
+  },
+  {
+    description: "Let go when the power and angle feel right to take the shot.",
+    icon: Crosshair,
+    title: "Release to shoot",
+  },
 ];
 
 const stack = [
@@ -50,7 +84,7 @@ export default function GamePage() {
         </header>
 
         <main className="flex flex-1 flex-col gap-5 py-4 lg:gap-6 lg:py-5">
-          <section className="fade-up flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <section className="fade-up flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="font-mono text-primary text-xs tracking-normal">
                 PLAYABLE 8-BALL
@@ -59,14 +93,28 @@ export default function GamePage() {
                 Your table
               </h1>
             </div>
-            <p className="flex max-w-md items-start gap-2 text-muted-foreground text-sm leading-6">
-              <Info
-                className="mt-0.5 size-4 shrink-0 text-primary/80"
-                aria-hidden="true"
-              />
-              Drag from the cue ball, pull back to set power, and release to
-              shoot.
-            </p>
+
+            <div className="grid gap-2 sm:grid-cols-2 lg:max-w-2xl">
+              {controls.map((step, index) => (
+                <div
+                  className="flex items-start gap-3 rounded-[10px] bg-card/90 p-3 shadow-sm ring-1 ring-border backdrop-blur-sm"
+                  key={step.title}
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-[8px] bg-primary/10 text-primary">
+                    <step.icon className="size-4" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="font-mono text-[0.65rem] text-muted-foreground">
+                      STEP {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <p className="font-medium text-sm">{step.title}</p>
+                    <p className="mt-0.5 text-muted-foreground text-xs leading-5">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           <section id="table" className="fade-up min-w-0 flex-1">

@@ -16,7 +16,11 @@ import {
   getActiveBallCount,
   getCueBall,
   getObjectBalls,
+  getShotPowerFromPull,
   getSystemEnergy,
+  MAX_PULL_LENGTH,
+  MAX_SHOT_POWER,
+  MIN_SHOT_POWER,
   POCKET_RADIUS,
   pocketSettledBalls,
   pockets,
@@ -37,11 +41,13 @@ type GameSnapshot = {
   groups: Record<Player, AssignedGroup | null>;
   message: string;
   pocketed: number[];
+  shotPower: number | null;
   status: GameStatus;
 };
 
 type PixiLayers = {
   aim: Graphics;
+  aimLabels: Container;
   balls: Graphics;
   colors: GameColors;
   labels: Container;
@@ -66,6 +72,7 @@ const initialSnapshot: GameSnapshot = {
   groups: { 1: null, 2: null },
   message: "Drag from the cue ball, pull back, and release to shoot.",
   pocketed: [],
+  shotPower: null,
   status: "aiming",
 };
 
@@ -94,7 +101,27 @@ export function GameTable() {
     aimingRef.current = false;
     aimPointRef.current = null;
     setSnapshot(initialSnapshot);
-    drawScene(layersRef.current, ballsRef.current, null);
+    drawScene(layersRef.current, ballsRef.current, null, null);
+  }, []);
+
+  const syncAimPower = useCallback((aimPoint: Vector | null) => {
+    const cueBall = getCueBall(ballsRef.current);
+
+    if (!aimPoint || !cueBall) {
+      setSnapshot((current) => ({ ...current, shotPower: null }));
+      return;
+    }
+
+    const pull = {
+      x: cueBall.position.x - aimPoint.x,
+      y: cueBall.position.y - aimPoint.y,
+    };
+    const shotPower = getShotPowerFromPull(pull);
+
+    setSnapshot((current) => ({
+      ...current,
+      shotPower: shotPower < MIN_SHOT_POWER ? 0 : Math.round(shotPower),
+    }));
   }, []);
 
   useEffect(() => {
@@ -163,6 +190,7 @@ export function GameTable() {
 
       const layers: PixiLayers = {
         aim: new Graphics(),
+        aimLabels: new Container(),
         balls: new Graphics(),
         colors: getGameColors(),
         labels: new Container(),
@@ -171,9 +199,10 @@ export function GameTable() {
       };
 
       app.stage.addChild(layers.table);
-      app.stage.addChild(layers.aim);
       app.stage.addChild(layers.balls);
       app.stage.addChild(layers.labels);
+      app.stage.addChild(layers.aim);
+      app.stage.addChild(layers.aimLabels);
 
       const getTablePoint = (event: PointerEvent): Vector => {
         const rect = app.canvas.getBoundingClientRect();
@@ -201,7 +230,11 @@ export function GameTable() {
 
         aimingRef.current = true;
         aimPointRef.current = point;
-        drawScene(layers, ballsRef.current, point);
+        syncAimPower(point);
+        drawScene(layers, ballsRef.current, point, getShotPowerFromPull({
+          x: cueBall.position.x - point.x,
+          y: cueBall.position.y - point.y,
+        }));
       };
 
       const handlePointerMove = (event: PointerEvent) => {
@@ -210,8 +243,20 @@ export function GameTable() {
         }
 
         const point = getTablePoint(event);
+        const cueBall = getCueBall(ballsRef.current);
         aimPointRef.current = point;
-        drawScene(layers, ballsRef.current, point);
+        syncAimPower(point);
+        drawScene(
+          layers,
+          ballsRef.current,
+          point,
+          cueBall
+            ? getShotPowerFromPull({
+                x: cueBall.position.x - point.x,
+                y: cueBall.position.y - point.y,
+              })
+            : null,
+        );
       };
 
       const handlePointerUp = () => {
@@ -226,13 +271,14 @@ export function GameTable() {
           x: cueBall.position.x - aimPoint.x,
           y: cueBall.position.y - aimPoint.y,
         };
-        const power = Math.min(Math.hypot(pull.x, pull.y) * 0.72, 100);
+        const power = getShotPowerFromPull(pull);
 
         aimingRef.current = false;
         aimPointRef.current = null;
+        setSnapshot((current) => ({ ...current, shotPower: null }));
 
-        if (power < 6) {
-          drawScene(layers, ballsRef.current, null);
+        if (power < MIN_SHOT_POWER) {
+          drawScene(layers, ballsRef.current, null, null);
           return;
         }
 
@@ -244,6 +290,7 @@ export function GameTable() {
           message: `Player ${currentPlayerRef.current} shot with ${Math.round(
             power,
           )}% power.`,
+          shotPower: null,
           status: "rolling",
         }));
       };
@@ -286,12 +333,12 @@ export function GameTable() {
           }));
         }
 
-        drawScene(layers, ballsRef.current, aimPointRef.current);
+        drawScene(layers, ballsRef.current, aimPointRef.current, null);
       });
 
       appRef.current = app;
       layersRef.current = layers;
-      drawScene(layers, ballsRef.current, null);
+      drawScene(layers, ballsRef.current, null, null);
 
       function settleTurn() {
         const pocketed = pocketedThisTurnRef.current;
@@ -330,6 +377,7 @@ export function GameTable() {
               .filter((ball) => ball.pocketed)
               .map((ball) => ball.number ?? ball.id)
               .sort((a, b) => a - b),
+            shotPower: null,
             status: "won",
           }));
           return;
@@ -356,6 +404,7 @@ export function GameTable() {
             .filter((ball) => ball.pocketed)
             .map((ball) => ball.number ?? ball.id)
             .sort((a, b) => a - b),
+          shotPower: null,
           status: "aiming",
         });
       }
@@ -379,7 +428,7 @@ export function GameTable() {
       layersRef.current = null;
       hostElement.textContent = "";
     };
-  }, []);
+  }, [syncAimPower]);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -402,6 +451,8 @@ export function GameTable() {
             {snapshot.message}
           </p>
         </div>
+
+        <PowerMeter shotPower={snapshot.shotPower} status={snapshot.status} />
 
         <div className="grid grid-cols-2 gap-2">
           <StatTile label="player 1" value={snapshot.groups[1] ?? "open"} />
@@ -446,6 +497,47 @@ export function GameTable() {
   );
 }
 
+function PowerMeter({
+  shotPower,
+  status,
+}: {
+  shotPower: number | null;
+  status: GameStatus;
+}) {
+  const isAiming = status === "aiming";
+  const power = shotPower ?? 0;
+  const isReady = power >= MIN_SHOT_POWER;
+
+  return (
+    <div className="rounded-[10px] bg-card p-4 ring-1 ring-border">
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-mono text-primary text-xs">shot power</div>
+        <span
+          className={`font-mono text-xs ${
+            isAiming && isReady ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          {isAiming ? `${power}%` : "pull to aim"}
+        </span>
+      </div>
+      <meter
+        aria-label="Shot power"
+        className="power-meter mt-3 block h-2.5 w-full overflow-hidden rounded-full"
+        max={MAX_SHOT_POWER}
+        min={0}
+        value={isAiming ? power : 0}
+      />
+      <p className="mt-2 text-muted-foreground text-xs leading-5">
+        {isAiming
+          ? isReady
+            ? "Release to shoot. Further pull = harder hit."
+            : "Pull back a little more to register a shot."
+          : "Press and drag from the cue ball to line up power."}
+      </p>
+    </div>
+  );
+}
+
 function StatTile({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-[10px] bg-card p-3 ring-1 ring-border">
@@ -461,14 +553,15 @@ function drawScene(
   layers: PixiLayers | null,
   balls: Ball[],
   aimPoint: Vector | null,
+  shotPower: number | null,
 ) {
   if (!layers) {
     return;
   }
 
   drawTable(layers.table, layers.colors);
-  drawAim(layers.aim, balls, aimPoint, layers.colors);
   drawBalls(layers.balls, layers.labels, balls, layers.Text);
+  drawAim(layers, balls, aimPoint, shotPower);
 }
 
 function drawTable(graphics: Graphics, colors: GameColors) {
@@ -529,14 +622,16 @@ function drawTable(graphics: Graphics, colors: GameColors) {
 }
 
 function drawAim(
-  graphics: Graphics,
+  layers: PixiLayers,
   balls: Ball[],
   aimPoint: Vector | null,
-  colors: GameColors,
+  shotPower: number | null,
 ) {
+  const { aim: graphics, aimLabels, colors, Text } = layers;
   const cueBall = getCueBall(balls);
 
   graphics.clear();
+  aimLabels.removeChildren();
 
   if (!cueBall || cueBall.pocketed || !aimPoint) {
     return;
@@ -552,10 +647,52 @@ function drawAim(
     return;
   }
 
+  const power = shotPower ?? getShotPowerFromPull(pull);
+  const powerRatio = Math.min(power / MAX_SHOT_POWER, 1);
+  const powerColor = getPowerColor(powerRatio);
   const nx = pull.x / pullLength;
   const ny = pull.y / pullLength;
   const cueBack = Math.min(78, pullLength * 0.7);
   const trajectory = computeCueTrajectory(cueBall, pull, balls);
+
+  graphics
+    .circle(cueBall.position.x, cueBall.position.y, MAX_PULL_LENGTH)
+    .stroke({ alpha: 0.2, color: colors.guide, width: 1.5 });
+
+  graphics
+    .moveTo(aimPoint.x, aimPoint.y)
+    .lineTo(cueBall.position.x, cueBall.position.y)
+    .stroke({
+      alpha: 0.35 + powerRatio * 0.45,
+      color: powerColor,
+      width: 2 + powerRatio * 4,
+    });
+
+  const meterWidth = 72;
+  const meterHeight = 8;
+  const meterX = cueBall.position.x - meterWidth / 2;
+  const meterY = cueBall.position.y - cueBall.radius - 28;
+  const fillWidth = meterWidth * powerRatio;
+
+  graphics
+    .roundRect(meterX, meterY, meterWidth, meterHeight, 4)
+    .fill({ alpha: 0.35, color: 0x0f1419 });
+  graphics
+    .roundRect(meterX, meterY, fillWidth, meterHeight, 4)
+    .fill({ alpha: 0.92, color: powerColor });
+
+  const powerLabel = new Text({
+    style: {
+      fill: "#f8fafc",
+      fontFamily: "Arial",
+      fontSize: 11,
+      fontWeight: "700",
+    },
+    text: `${Math.round(power)}%`,
+  });
+  powerLabel.anchor.set(0.5);
+  powerLabel.position.set(cueBall.position.x, meterY - 10);
+  aimLabels.addChild(powerLabel);
 
   if (trajectory.objectBallPath && trajectory.hitBall) {
     const objectColor = toPixiColor(trajectory.hitBall.color);
@@ -703,6 +840,18 @@ function drawBallLabel(labels: Container, ball: Ball, Text: typeof PixiText) {
 
 function toPixiColor(color: string) {
   return Number.parseInt(color.replace("#", ""), 16);
+}
+
+function getPowerColor(ratio: number) {
+  if (ratio < 0.45) {
+    return 0x3ecf8e;
+  }
+
+  if (ratio < 0.75) {
+    return 0xf5c542;
+  }
+
+  return 0xf06449;
 }
 
 function getGameColors(): GameColors {

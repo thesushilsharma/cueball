@@ -193,6 +193,33 @@
     }
   }
 
+  .power-meter {
+    appearance: none;
+    background: var(--muted);
+    border: none;
+  }
+
+  .power-meter::-webkit-meter-bar {
+    background: var(--muted);
+    border-radius: 9999px;
+  }
+
+  .power-meter::-webkit-meter-optimum-value {
+    background: oklch(0.72 0.17 155);
+    border-radius: 9999px;
+    transition: width 75ms ease-out;
+  }
+
+  .power-meter::-moz-meter-bar {
+    background: var(--muted);
+    border-radius: 9999px;
+  }
+
+  .power-meter::-moz-meter-optimum {
+    background: oklch(0.72 0.17 155);
+    border-radius: 9999px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .fade-up {
       transition: opacity 200ms ease;

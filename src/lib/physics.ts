@@ -29,6 +29,14 @@ export type Table = {
 
 export const SIMULATION_HZ = 120;
 export const POCKET_RADIUS = 20;
+export const MAX_SHOT_POWER = 100;
+export const MIN_SHOT_POWER = 6;
+export const PULL_TO_POWER = 0.72;
+export const MAX_PULL_LENGTH = MAX_SHOT_POWER / PULL_TO_POWER;
+
+export function getShotPowerFromPull(pull: Vector) {
+  return Math.min(Math.hypot(pull.x, pull.y) * PULL_TO_POWER, MAX_SHOT_POWER);
+}
 
 export const table: Table = {
   height: 520,
@@ -150,7 +158,7 @@ export function computeCueTrajectory(
   const obstacles = allBalls.filter(
     (ball) => !ball.pocketed && ball.id !== cueBall.id,
   );
-  const initialSpeed = Math.min(pullLength * 0.72, 100) * 5.4;
+  const initialSpeed = getShotPowerFromPull(pull) * 5.4;
   const initialVelocity = {
     x: (pull.x / pullLength) * initialSpeed,
     y: (pull.y / pullLength) * initialSpeed,
