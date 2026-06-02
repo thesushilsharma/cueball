@@ -431,8 +431,8 @@ export function GameTable() {
   }, [syncAimPower]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <div className="rounded-[14px] bg-[var(--game-table-shadow)] p-3 shadow-2xl shadow-black/40 ring-1 ring-border">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+      <div className="rounded-[14px] bg-[var(--game-table-shadow)] p-2.5 shadow-2xl shadow-black/30 sm:p-3">
         <div
           ref={hostRef}
           aria-label="Playable Cueball PixiJS 8-ball game table"
@@ -441,58 +441,64 @@ export function GameTable() {
         />
       </div>
 
-      <div className="grid content-start gap-3">
-        <div className="rounded-[10px] bg-card p-4 text-card-foreground ring-1 ring-border">
-          <div className="font-mono text-primary text-xs">current turn</div>
-          <div className="mt-1 font-semibold text-3xl">
-            Player {snapshot.currentPlayer}
+      <aside className="flex flex-col gap-5 rounded-[12px] bg-card/80 p-4 ring-1 ring-border backdrop-blur-sm">
+        <div className="space-y-4">
+          <div>
+            <p className="font-mono text-[0.65rem] text-muted-foreground uppercase tracking-wide">
+              Player {snapshot.currentPlayer}
+            </p>
+            <p className="mt-1 text-pretty text-sm leading-6 text-foreground">
+              {snapshot.message}
+            </p>
           </div>
-          <p className="mt-3 min-h-12 text-muted-foreground text-sm leading-6">
-            {snapshot.message}
-          </p>
+
+          <PowerMeter
+            shotPower={snapshot.shotPower}
+            status={snapshot.status}
+          />
         </div>
 
-        <PowerMeter shotPower={snapshot.shotPower} status={snapshot.status} />
-
-        <div className="grid grid-cols-2 gap-2">
-          <StatTile label="player 1" value={snapshot.groups[1] ?? "open"} />
-          <StatTile label="player 2" value={snapshot.groups[2] ?? "open"} />
-          <StatTile label="state" value={snapshot.status} />
-          <StatTile label="moving" value={snapshot.activeBalls} />
-        </div>
-
-        <div className="rounded-[10px] bg-card p-3 ring-1 ring-border">
-          <div className="font-mono text-primary text-xs">pocketed</div>
-          <div className="mt-2 flex min-h-8 flex-wrap gap-1.5">
-            {snapshot.pocketed.length ? (
-              snapshot.pocketed.map((number) => (
-                <span
-                  className="grid size-7 place-items-center rounded-full bg-foreground font-mono text-background text-xs ring-1 ring-border"
-                  key={number}
-                >
-                  {number}
-                </span>
-              ))
-            ) : (
-              <span className="text-muted-foreground text-sm">none yet</span>
-            )}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-border/80 border-t pt-4 text-sm">
+          <div>
+            <dt className="text-muted-foreground text-xs">Player 1</dt>
+            <dd className="mt-0.5 font-medium capitalize">
+              {snapshot.groups[1] ?? "open"}
+            </dd>
           </div>
-        </div>
-
-        <div className="rounded-[10px] bg-card p-3 font-mono text-muted-foreground text-xs ring-1 ring-border">
-          drag cue ball to aim / energy {snapshot.energy} px-s / physics{" "}
-          {SIMULATION_HZ} hz
-        </div>
+          <div>
+            <dt className="text-muted-foreground text-xs">Player 2</dt>
+            <dd className="mt-0.5 font-medium capitalize">
+              {snapshot.groups[2] ?? "open"}
+            </dd>
+          </div>
+          <div className="col-span-2">
+            <dt className="text-muted-foreground text-xs">Pocketed</dt>
+            <dd className="mt-1.5 flex min-h-7 flex-wrap gap-1">
+              {snapshot.pocketed.length ? (
+                snapshot.pocketed.map((number) => (
+                  <span
+                    className="grid size-6 place-items-center rounded-full bg-foreground font-mono text-[0.65rem] text-background"
+                    key={number}
+                  >
+                    {number}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground text-xs">—</span>
+              )}
+            </dd>
+          </div>
+        </dl>
 
         <button
-          className="interactive-press inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary px-3 font-semibold text-primary-foreground text-sm transition-[background-color] duration-200 hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+          className="interactive-press mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-primary font-medium text-primary-foreground text-sm transition-[background-color] duration-200 hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
           onClick={resetGame}
           type="button"
         >
           <RotateCcw className="size-4" aria-hidden="true" />
           New rack
         </button>
-      </div>
+      </aside>
     </div>
   );
 }
@@ -509,42 +515,29 @@ function PowerMeter({
   const isReady = power >= MIN_SHOT_POWER;
 
   return (
-    <div className="rounded-[10px] bg-card p-4 ring-1 ring-border">
-      <div className="flex items-center justify-between gap-3">
-        <div className="font-mono text-primary text-xs">shot power</div>
+    <div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-muted-foreground text-xs">Power</span>
         <span
-          className={`font-mono text-xs ${
+          className={`font-mono text-sm tabular-nums ${
             isAiming && isReady ? "text-foreground" : "text-muted-foreground"
           }`}
         >
-          {isAiming ? `${power}%` : "pull to aim"}
+          {isAiming ? `${power}%` : "—"}
         </span>
       </div>
       <meter
         aria-label="Shot power"
-        className="power-meter mt-3 block h-2.5 w-full overflow-hidden rounded-full"
+        className="power-meter mt-2 block h-2 w-full overflow-hidden rounded-full"
         max={MAX_SHOT_POWER}
         min={0}
         value={isAiming ? power : 0}
       />
-      <p className="mt-2 text-muted-foreground text-xs leading-5">
-        {isAiming
-          ? isReady
-            ? "Release to shoot. Further pull = harder hit."
-            : "Pull back a little more to register a shot."
-          : "Press and drag from the cue ball to line up power."}
-      </p>
-    </div>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="rounded-[10px] bg-card p-3 ring-1 ring-border">
-      <div className="font-mono text-primary text-xs">{label}</div>
-      <div className="mt-1 font-semibold text-card-foreground text-xl capitalize">
-        {value}
-      </div>
+      {isAiming ? (
+        <p className="mt-1.5 text-muted-foreground text-xs">
+          {isReady ? "Release to shoot" : "Pull back a bit more"}
+        </p>
+      ) : null}
     </div>
   );
 }
