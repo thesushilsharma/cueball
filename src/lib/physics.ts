@@ -526,10 +526,10 @@ export function pocketSettledBalls(balls: Ball[]) {
 
 export function stepSimulation(balls: Ball[], friction: number) {
   const bounds = {
-    bottom: table.height - table.rail - 16,
-    left: table.rail + 16,
-    right: table.width - table.rail - 16,
-    top: table.rail + 16,
+    bottom: table.height - table.rail,
+    left: table.rail,
+    right: table.width - table.rail,
+    top: table.rail,
   };
   let collisions = 0;
 
